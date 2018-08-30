@@ -154,61 +154,61 @@ public class ConcertServiceTest {
 			assertEquals(Messages.CREATE_USER_WITH_NON_UNIQUE_NAME, e.getMessage());
 		}
 	}
-//
-//	@Test
-//	public void testAuthenticateUser() {
-//		try {
-//			UserDTO userDTO = new UserDTO("Bulldog", "123", "Churchill", "Winston");
-//			_service.createUser(userDTO);
-//
-//			UserDTO credentials = new UserDTO("Bulldog", "123");
-//			UserDTO filledDTO = _service.authenticateUser(credentials);
-//
-//			assertEquals(userDTO, filledDTO);
-//		} catch(ServiceException e) {
-//			fail();
-//		}
-//	}
-//
-//	@Test
-//	public void testAuthenticateWithNonExistentUser() {
-//		try {
-//			UserDTO credentials = new UserDTO("Bulldog", "123");
-//			_service.authenticateUser(credentials);
-//			fail();
-//		} catch(ServiceException e) {
-//			assertEquals(Messages.AUTHENTICATE_NON_EXISTENT_USER, e.getMessage());
-//		}
-//	}
-//
-//	@Test
-//	public void testAuthenticateUserWithIncorrectPassword() {
-//		try {
-//			UserDTO userDTO = new UserDTO("Bulldog", "123", "Churchill", "Winston");
-//			_service.createUser(userDTO);
-//
-//			UserDTO credentials = new UserDTO("Bulldog", "987");
-//			_service.authenticateUser(credentials);
-//			fail();
-//		} catch(ServiceException e) {
-//			assertEquals(Messages.AUTHENTICATE_USER_WITH_ILLEGAL_PASSWORD, e.getMessage());
-//		}
-//	}
-//
-//	@Test
-//	public void testAuthenticateUserWithMissingPassword() {
-//		try {
-//			UserDTO userDTO = new UserDTO("Bulldog", "123", "Churchill", "Winston");
-//			_service.createUser(userDTO);
-//
-//			UserDTO credentials = new UserDTO("Bulldog", null);
-//			_service.authenticateUser(credentials);
-//			fail();
-//		} catch(ServiceException e) {
-//			assertEquals(Messages.AUTHENTICATE_USER_WITH_MISSING_FIELDS, e.getMessage());
-//		}
-//	}
-//
+
+	@Test
+	public void testAuthenticateUser() {
+		try {
+			UserDTO userDTO = new UserDTO("Bulldog", "123", "Churchill", "Winston");
+			_service.createUser(userDTO);
+
+			UserDTO credentials = new UserDTO("Bulldog", "123");
+			UserDTO filledDTO = _service.authenticateUser(credentials);
+
+			assertEquals(userDTO, filledDTO);
+		} catch(ServiceException e) {
+			fail();
+		}
+	}
+
+	@Test
+	public void testAuthenticateWithNonExistentUser() {
+		try {
+			UserDTO credentials = new UserDTO("Bulldog", "123");
+			_service.authenticateUser(credentials);
+			fail();
+		} catch(ServiceException e) {
+			assertEquals(Messages.AUTHENTICATE_NON_EXISTENT_USER, e.getMessage());
+		}
+	}
+
+	@Test
+	public void testAuthenticateUserWithIncorrectPassword() {
+		try {
+			UserDTO userDTO = new UserDTO("Bulldog", "123", "Churchill", "Winston");
+			_service.createUser(userDTO);
+
+			UserDTO credentials = new UserDTO("Bulldog", "987");
+			_service.authenticateUser(credentials);
+			fail();
+		} catch(ServiceException e) {
+			assertEquals(Messages.AUTHENTICATE_USER_WITH_ILLEGAL_PASSWORD, e.getMessage());
+		}
+	}
+
+	@Test
+	public void testAuthenticateUserWithMissingPassword() {
+		try {
+			UserDTO userDTO = new UserDTO("Bulldog", "123", "Churchill", "Winston");
+			_service.createUser(userDTO);
+
+			UserDTO credentials = new UserDTO("Bulldog", null);
+			_service.authenticateUser(credentials);
+			fail();
+		} catch(ServiceException e) {
+			assertEquals(Messages.AUTHENTICATE_USER_WITH_MISSING_FIELDS, e.getMessage());
+		}
+	}
+
 //	@Test
 //	public void testMakeReservation() {
 //		try {

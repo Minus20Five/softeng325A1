@@ -120,7 +120,39 @@ public class DefaultService implements ConcertService {
 
     @Override
     public UserDTO authenticateUser(UserDTO user) throws ServiceException {
-        return null;
+        Client client = ClientBuilder.newClient();
+        Response response = null;
+        try {
+            Builder builder = client.target(WEB_SERVICE_URI + "/user/login")
+                    .request(MediaType.APPLICATION_XML)
+                    .accept(MediaType.APPLICATION_XML);
+            response = builder.post(Entity.entity(user, MediaType.APPLICATION_XML));
+            switch (response.getStatus()) {
+                case 202:   //ACCEPTED
+                    processCookieFromResponse(response);
+                    return response.readEntity(UserDTO.class);
+                case 400:   //BAD REQUEST
+                    throw new ServiceException(Messages.AUTHENTICATE_USER_WITH_MISSING_FIELDS);
+                case 404:   //NOT FOUND
+                    throw new ServiceException(Messages.AUTHENTICATE_NON_EXISTENT_USER);
+                case 401:   //UNAUTHORIZED
+                    throw new ServiceException(Messages.AUTHENTICATE_USER_WITH_ILLEGAL_PASSWORD);
+                default:
+                    throw new ServiceException(Messages.SERVICE_COMMUNICATION_ERROR);
+            }
+        } catch (Exception e) {
+            if (e instanceof ServiceException) {
+                throw e;
+            }
+            throw new ServiceException(Messages.SERVICE_COMMUNICATION_ERROR);
+        } finally {
+            if (response != null) {
+                response.close();
+            }
+            if (client != null) {
+                client.close();
+            }
+        }
     }
 
     @Override
@@ -153,6 +185,7 @@ public class DefaultService implements ConcertService {
 
         if(cookies.containsKey(Config.CLIENT_COOKIE)) {
             token = cookies.get(Config.CLIENT_COOKIE);
+            System.out.println(token.getValue());
         }
     }
 }

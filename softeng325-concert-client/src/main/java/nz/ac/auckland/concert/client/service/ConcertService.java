@@ -142,22 +142,22 @@ public interface ConcertService {
 	 * class nz.ac.auckland.concert.common.Messages.
 	 *
 	 * Condition: the request is made by an unauthenticated user.
-	 * Messages.UNAUTHENTICATED_REQUEST
+	 * Messages.UNAUTHENTICATED_REQUEST //unauthorized
 	 *
 	 * Condition: the request includes an authentication token but it's not
 	 * recognised by the remote service.
-	 * Messages.BAD_AUTHENTICATON_TOKEN
+	 * Messages.BAD_AUTHENTICATON_TOKEN //forbidden
 	 *
 	 * Condition: the ReservationRequestDTO parameter is incomplete.
-	 * Messages.RESERVATION_REQUEST_WITH_MISSING_FIELDS
+	 * Messages.RESERVATION_REQUEST_WITH_MISSING_FIELDS //bad request
 	 *
 	 * Condition: the ReservationRequestDTO parameter specifies a reservation
 	 * date/time for when the concert is not scheduled.
-	 * Messages.CONCERT_NOT_SCHEDULED_ON_RESERVATION_DATE
+	 * Messages.CONCERT_NOT_SCHEDULED_ON_RESERVATION_DATE //not found
 	 *
 	 * Condition: the reservation request is unsuccessful because the number of
 	 * seats within the required price band are unavailable.
-	 * Messages.INSUFFICIENT_SEATS_AVAILABLE_FOR_RESERVATION
+	 * Messages.INSUFFICIENT_SEATS_AVAILABLE_FOR_RESERVATION //conflict
 	 *
 	 * Condition: there is a communication error.
 	 * Messages.SERVICE_COMMUNICATION_ERROR
