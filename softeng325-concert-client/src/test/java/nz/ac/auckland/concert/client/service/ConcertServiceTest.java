@@ -2,9 +2,15 @@ package nz.ac.auckland.concert.client.service;
 
 import nz.ac.auckland.concert.common.dto.ConcertDTO;
 import nz.ac.auckland.concert.common.dto.PerformerDTO;
+import nz.ac.auckland.concert.common.dto.ReservationDTO;
+import nz.ac.auckland.concert.common.dto.ReservationRequestDTO;
+import nz.ac.auckland.concert.common.dto.SeatDTO;
 import nz.ac.auckland.concert.common.dto.UserDTO;
 import nz.ac.auckland.concert.common.message.Messages;
+import nz.ac.auckland.concert.common.types.PriceBand;
+import nz.ac.auckland.concert.common.types.SeatRow;
 import nz.ac.auckland.concert.service.services.ConcertApplication;
+import nz.ac.auckland.concert.utility.TheatreLayout;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -20,8 +26,10 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 
+import java.time.LocalDateTime;
 import java.util.Set;
 
+import static junit.framework.TestCase.assertTrue;
 import static junit.framework.TestCase.fail;
 import static org.junit.Assert.assertEquals;
 
@@ -93,122 +101,122 @@ public class ConcertServiceTest {
 	public void stopServer() throws Exception {
 		_server.stop();
 	}
-
-	@Test
-	public void testDummy(){
-		assertEquals(0,0);
-	}
-
-	@Test
-	public void testRetrieveConcerts() {
-		final int numberOfConcerts = 25;
-
-		Set<ConcertDTO> concerts = _service.getConcerts();
-		assertEquals(numberOfConcerts, concerts.size());
-	}
-
-	@Test
-	public void testRetrievePerformers() {
-		final int numberOfPerformers = 20;
-
-		Set<PerformerDTO> performers = _service.getPerformers();
-		assertEquals(numberOfPerformers, performers.size());
-	}
-
-	@Test
-	public void testCreateUser() {
-		try {
-			UserDTO userDTO = new UserDTO("Bulldog", "123", "Churchill", "Winston");
-			_service.createUser(userDTO);
-		} catch(ServiceException e) {
-			fail();
-		}
-	}
-
-	@Test
-	public void testCreateUserWithMissingField() {
-		try {
-			UserDTO userDTO = new UserDTO(null, "123", "Churchill", "Winston");
-			_service.createUser(userDTO);
-			fail();
-		} catch(ServiceException e) {
-			assertEquals(Messages.CREATE_USER_WITH_MISSING_FIELDS, e.getMessage());
-		}
-	}
-
-	@Test
-	public void testCreateUserWithDuplicateUsername() {
-		boolean createdFirstUser = false;
-		try {
-			UserDTO userDTO = new UserDTO("Bulldog", "123", "Churchill", "Winston");
-			_service.createUser(userDTO);
-			createdFirstUser = true;
-
-			userDTO = new UserDTO("Bulldog", "123", "Thatcher", "Margaret");
-			_service.createUser(userDTO);
-			fail();
-		} catch(ServiceException e) {
-			if(!createdFirstUser) {
-				fail();
-			}
-			assertEquals(Messages.CREATE_USER_WITH_NON_UNIQUE_NAME, e.getMessage());
-		}
-	}
-
-	@Test
-	public void testAuthenticateUser() {
-		try {
-			UserDTO userDTO = new UserDTO("Bulldog", "123", "Churchill", "Winston");
-			_service.createUser(userDTO);
-
-			UserDTO credentials = new UserDTO("Bulldog", "123");
-			UserDTO filledDTO = _service.authenticateUser(credentials);
-
-			assertEquals(userDTO, filledDTO);
-		} catch(ServiceException e) {
-			fail();
-		}
-	}
-
-	@Test
-	public void testAuthenticateWithNonExistentUser() {
-		try {
-			UserDTO credentials = new UserDTO("Bulldog", "123");
-			_service.authenticateUser(credentials);
-			fail();
-		} catch(ServiceException e) {
-			assertEquals(Messages.AUTHENTICATE_NON_EXISTENT_USER, e.getMessage());
-		}
-	}
-
-	@Test
-	public void testAuthenticateUserWithIncorrectPassword() {
-		try {
-			UserDTO userDTO = new UserDTO("Bulldog", "123", "Churchill", "Winston");
-			_service.createUser(userDTO);
-
-			UserDTO credentials = new UserDTO("Bulldog", "987");
-			_service.authenticateUser(credentials);
-			fail();
-		} catch(ServiceException e) {
-			assertEquals(Messages.AUTHENTICATE_USER_WITH_ILLEGAL_PASSWORD, e.getMessage());
-		}
-	}
-
-	@Test
-	public void testAuthenticateUserWithMissingPassword() {
-		try {
-			UserDTO userDTO = new UserDTO("Bulldog", "123", "Churchill", "Winston");
-			_service.createUser(userDTO);
-
-			UserDTO credentials = new UserDTO("Bulldog", null);
-			_service.authenticateUser(credentials);
-			fail();
-		} catch(ServiceException e) {
-			assertEquals(Messages.AUTHENTICATE_USER_WITH_MISSING_FIELDS, e.getMessage());
-		}
-	}
-
+//
+//	@Test
+//	public void testDummy(){
+//		assertEquals(0,0);
+//	}
+//
+//	@Test
+//	public void testRetrieveConcerts() {
+//		final int numberOfConcerts = 25;
+//
+//		Set<ConcertDTO> concerts = _service.getConcerts();
+//		assertEquals(numberOfConcerts, concerts.size());
+//	}
+//
+//	@Test
+//	public void testRetrievePerformers() {
+//		final int numberOfPerformers = 20;
+//
+//		Set<PerformerDTO> performers = _service.getPerformers();
+//		assertEquals(numberOfPerformers, performers.size());
+//	}
+//
+//	@Test
+//	public void testCreateUser() {
+//		try {
+//			UserDTO userDTO = new UserDTO("Bulldog", "123", "Churchill", "Winston");
+//			_service.createUser(userDTO);
+//		} catch(ServiceException e) {
+//			fail();
+//		}
+//	}
+//
+//	@Test
+//	public void testCreateUserWithMissingField() {
+//		try {
+//			UserDTO userDTO = new UserDTO(null, "123", "Churchill", "Winston");
+//			_service.createUser(userDTO);
+//			fail();
+//		} catch(ServiceException e) {
+//			assertEquals(Messages.CREATE_USER_WITH_MISSING_FIELDS, e.getMessage());
+//		}
+//	}
+//
+//	@Test
+//	public void testCreateUserWithDuplicateUsername() {
+//		boolean createdFirstUser = false;
+//		try {
+//			UserDTO userDTO = new UserDTO("Bulldog", "123", "Churchill", "Winston");
+//			_service.createUser(userDTO);
+//			createdFirstUser = true;
+//
+//			userDTO = new UserDTO("Bulldog", "123", "Thatcher", "Margaret");
+//			_service.createUser(userDTO);
+//			fail();
+//		} catch(ServiceException e) {
+//			if(!createdFirstUser) {
+//				fail();
+//			}
+//			assertEquals(Messages.CREATE_USER_WITH_NON_UNIQUE_NAME, e.getMessage());
+//		}
+//	}
+//
+//	@Test
+//	public void testAuthenticateUser() {
+//		try {
+//			UserDTO userDTO = new UserDTO("Bulldog", "123", "Churchill", "Winston");
+//			_service.createUser(userDTO);
+//
+//			UserDTO credentials = new UserDTO("Bulldog", "123");
+//			UserDTO filledDTO = _service.authenticateUser(credentials);
+//
+//			assertEquals(userDTO, filledDTO);
+//		} catch(ServiceException e) {
+//			fail();
+//		}
+//	}
+//
+//	@Test
+//	public void testAuthenticateWithNonExistentUser() {
+//		try {
+//			UserDTO credentials = new UserDTO("Bulldog", "123");
+//			_service.authenticateUser(credentials);
+//			fail();
+//		} catch(ServiceException e) {
+//			assertEquals(Messages.AUTHENTICATE_NON_EXISTENT_USER, e.getMessage());
+//		}
+//	}
+//
+//	@Test
+//	public void testAuthenticateUserWithIncorrectPassword() {
+//		try {
+//			UserDTO userDTO = new UserDTO("Bulldog", "123", "Churchill", "Winston");
+//			_service.createUser(userDTO);
+//
+//			UserDTO credentials = new UserDTO("Bulldog", "987");
+//			_service.authenticateUser(credentials);
+//			fail();
+//		} catch(ServiceException e) {
+//			assertEquals(Messages.AUTHENTICATE_USER_WITH_ILLEGAL_PASSWORD, e.getMessage());
+//		}
+//	}
+//
+//	@Test
+//	public void testAuthenticateUserWithMissingPassword() {
+//		try {
+//			UserDTO userDTO = new UserDTO("Bulldog", "123", "Churchill", "Winston");
+//			_service.createUser(userDTO);
+//
+//			UserDTO credentials = new UserDTO("Bulldog", null);
+//			_service.authenticateUser(credentials);
+//			fail();
+//		} catch(ServiceException e) {
+//			assertEquals(Messages.AUTHENTICATE_USER_WITH_MISSING_FIELDS, e.getMessage());
+//		}
+//	}
+//
 //	@Test
 //	public void testMakeReservation() {
 //		try {
@@ -290,7 +298,56 @@ public class ConcertServiceTest {
 //			assertEquals(Messages.INSUFFICIENT_SEATS_AVAILABLE_FOR_RESERVATION, e.getMessage());
 //		}
 //	}
-//
+
+    @Test
+    public void testMakeReservationWhereSeatsHaveTimedOut() {
+        try {
+            UserDTO userDTO = new UserDTO("Bulldog", "123", "Churchill", "Winston");
+            _service.createUser(userDTO);
+
+            Set<SeatRow> rowsOfStandardSeats = TheatreLayout.getRowsForPriceBand(PriceBand.PriceBandB);
+            int totalNumberOfStandardSeats = 0;
+            for(SeatRow row : rowsOfStandardSeats) {
+                totalNumberOfStandardSeats += TheatreLayout.getNumberOfSeatsForRow(row);
+            }
+
+            LocalDateTime dateTime = LocalDateTime.of(2017, 2, 24, 17, 00);
+            ReservationRequestDTO request = new ReservationRequestDTO(totalNumberOfStandardSeats, PriceBand.PriceBandB, 1L, dateTime);
+
+            ReservationDTO reservation = _service.reserveSeats(request);
+
+            ReservationRequestDTO requestFromResponse = reservation.getReservationRequest();
+            assertEquals(request, requestFromResponse);
+
+            Set<SeatDTO> reservedSeats = reservation.getSeats();
+            assertEquals(totalNumberOfStandardSeats, reservedSeats.size());
+
+            // Check that the seats reserved are of the required type.
+            for(SeatDTO seat : reservedSeats) {
+                assertTrue(TheatreLayout.getRowsForPriceBand(PriceBand.PriceBandB).contains(seat.getRow()));
+            }
+
+
+            try{
+                Thread.sleep(4000);
+            } catch (InterruptedException e) {
+                fail();
+            }
+
+            // Attempt to reserve another seat.
+            request = new ReservationRequestDTO(1, PriceBand.PriceBandB, 1L, dateTime);
+            reservation = _service.reserveSeats(request);
+
+            // Check that the seats reserved are of the required type.
+            for(SeatDTO seat : reservation.getSeats()) {
+                assertTrue(TheatreLayout.getRowsForPriceBand(PriceBand.PriceBandB).contains(seat.getRow()));
+            }
+
+        } catch(ServiceException e) {
+            fail();
+        }
+    }
+
 //	@Test
 //	public void testMakeReservationWithUnauthenticatedUser() {
 //		try {
@@ -305,7 +362,7 @@ public class ConcertServiceTest {
 //			assertEquals(Messages.UNAUTHENTICATED_REQUEST, e.getMessage());
 //		}
 //	}
-//
+
 //	@Test
 //	public void testConfirmReservation() {
 //		try {

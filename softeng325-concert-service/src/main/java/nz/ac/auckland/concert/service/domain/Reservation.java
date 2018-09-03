@@ -1,10 +1,19 @@
 package nz.ac.auckland.concert.service.domain;
 
-
 import nz.ac.auckland.concert.common.types.PriceBand;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity(name = "RESERVATIONS")
@@ -17,8 +26,25 @@ public class Reservation {
     @ManyToOne
     private User user;
 
-    @OneToMany(mappedBy = "reservations")
-    private Set<Seat> seats;
+    @OneToMany(
+            mappedBy = "reservation",
+            cascade = CascadeType.PERSIST,
+            orphanRemoval = true
+    )
+    private Set<Seat> seats = new HashSet<Seat>();
+
+    public Reservation(User user, PriceBand priceBand, int numberOfSeats, Concert concert, LocalDateTime dateTime, LocalTime timeStamp) {
+        this.user = user;
+        this.priceBand = priceBand;
+        this.numberOfSeats = numberOfSeats;
+        this.concert = concert;
+        this.dateTime = dateTime;
+        this.timeStamp = timeStamp;
+    }
+
+    public Reservation() {
+
+    }
 
     @Enumerated(EnumType.STRING)
     private PriceBand priceBand;
@@ -32,6 +58,7 @@ public class Reservation {
 
     private Boolean confirmed = false;
 
+    private LocalTime timeStamp;
 
     public Long getId() {
         return id;
@@ -81,11 +108,11 @@ public class Reservation {
         this.concert = concert;
     }
 
-    public LocalDateTime getDate() {
+    public LocalDateTime getDateTime() {
         return dateTime;
     }
 
-    public void setDate(LocalDateTime date) {
+    public void setDateTime(LocalDateTime date) {
         this.dateTime = date;
     }
 
@@ -95,6 +122,15 @@ public class Reservation {
 
     public void setConfirmed(Boolean confirmed) {
         this.confirmed = confirmed;
+    }
+
+
+    public LocalTime getTimeStamp() {
+        return timeStamp;
+    }
+
+    public void setTimeStamp(LocalTime timeStamp) {
+        this.timeStamp = timeStamp;
     }
 
 }

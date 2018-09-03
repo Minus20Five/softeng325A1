@@ -162,7 +162,46 @@ public class DefaultService implements ConcertService {
 
     @Override
     public ReservationDTO reserveSeats(ReservationRequestDTO reservationRequest) throws ServiceException {
-        return null;
+        Client client = ClientBuilder.newClient();
+        Response response = null;
+        try {
+            Builder builder = client.target(WEB_SERVICE_URI + "/user/reserve")
+                    .request(MediaType.APPLICATION_XML)
+                    .accept(MediaType.APPLICATION_XML);
+            if (token != null){
+                builder.cookie(token);
+            }
+            response = builder.post(Entity.entity(reservationRequest, MediaType.APPLICATION_XML));
+            switch (response.getStatus()) {
+                case 400:   //BAD REQUEST
+                    throw new ServiceException(Messages.RESERVATION_REQUEST_WITH_MISSING_FIELDS);
+                case 401:   //UNAUTHORIZED
+                    throw new ServiceException(Messages.UNAUTHENTICATED_REQUEST);
+                case 403:   //FORBIDDEN
+                    throw new ServiceException(Messages.BAD_AUTHENTICATON_TOKEN);
+                case 404:   //NOT FOUND
+                    throw new ServiceException(Messages.CONCERT_NOT_SCHEDULED_ON_RESERVATION_DATE);
+                case 409:   //CONFLICT
+                    throw new ServiceException(Messages.INSUFFICIENT_SEATS_AVAILABLE_FOR_RESERVATION);
+                case 201:   //CREATED
+                    return response.readEntity(ReservationDTO.class);
+                default:
+                    throw new ServiceException(Messages.SERVICE_COMMUNICATION_ERROR);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            if (e instanceof ServiceException) {
+                throw e;
+            }
+            throw new ServiceException(Messages.SERVICE_COMMUNICATION_ERROR);
+        } finally {
+            if (response != null) {
+                response.close();
+            }
+            if (client != null) {
+                client.close();
+            }
+        }
     }
 
     @Override
@@ -183,9 +222,8 @@ public class DefaultService implements ConcertService {
     private void processCookieFromResponse(Response response) {
         Map<String, NewCookie> cookies = response.getCookies();
 
-        if(cookies.containsKey(Config.CLIENT_COOKIE)) {
+        if (cookies.containsKey(Config.CLIENT_COOKIE)) {
             token = cookies.get(Config.CLIENT_COOKIE);
-            System.out.println(token.getValue());
         }
     }
 }

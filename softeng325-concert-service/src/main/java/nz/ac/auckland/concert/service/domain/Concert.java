@@ -1,14 +1,28 @@
 package nz.ac.auckland.concert.service.domain;
 
-import com.sun.javafx.beans.IDProperty;
 import nz.ac.auckland.concert.common.types.PriceBand;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.CollectionTable;
+import javax.persistence.Column;
+import javax.persistence.ElementCollection;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.MapKeyColumn;
+import javax.persistence.MapKeyEnumerated;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity(name = "CONCERTS")
@@ -84,9 +98,26 @@ public class Concert {
         this.tarrifs = tarrifs;
     }
 
-    public Concert(){}
+    public Concert() {
+    }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
 
+        if (o == null || getClass() != o.getClass()) return false;
 
+        Concert concert = (Concert) o;
 
+        return new EqualsBuilder()
+                .append(id, concert.id)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(id)
+                .toHashCode();
+    }
 }
