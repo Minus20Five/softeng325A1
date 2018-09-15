@@ -2,15 +2,7 @@ package nz.ac.auckland.concert.service.domain;
 
 import nz.ac.auckland.concert.common.types.PriceBand;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
+import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.HashSet;
@@ -18,6 +10,9 @@ import java.util.Set;
 
 @Entity(name = "RESERVATIONS")
 public class Reservation {
+
+    @Version
+    private int version;
 
     @Id
     @GeneratedValue
@@ -28,8 +23,7 @@ public class Reservation {
 
     @OneToMany(
             mappedBy = "reservation",
-            cascade = CascadeType.PERSIST,
-            orphanRemoval = true
+            cascade = CascadeType.PERSIST
     )
     private Set<Seat> seats = new HashSet<Seat>();
 

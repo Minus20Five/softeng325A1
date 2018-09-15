@@ -2,9 +2,11 @@ package nz.ac.auckland.concert.service.domain;
 
 import nz.ac.auckland.concert.common.types.SeatNumber;
 import nz.ac.auckland.concert.common.types.SeatRow;
+import nz.ac.auckland.concert.service.domain.jpa.SeatNumberConverter;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
+import javax.persistence.Convert;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 

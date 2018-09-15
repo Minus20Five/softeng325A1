@@ -10,7 +10,7 @@ import nz.ac.auckland.concert.common.types.SeatNumber;
  * can be readily mapped to a relational schema using JPA.
  *
  */
-@Converter
+@Converter(autoApply = true)
 public class SeatNumberConverter implements
 		AttributeConverter<SeatNumber, Integer> {
 

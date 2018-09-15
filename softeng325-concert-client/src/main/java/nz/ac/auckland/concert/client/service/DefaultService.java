@@ -89,8 +89,7 @@ public class DefaultService implements ConcertService {
         Response response = null;
         try {
             Builder builder = client.target(WEB_SERVICE_URI + "/user")
-                    .request(MediaType.APPLICATION_XML)
-                    .accept(MediaType.APPLICATION_XML);
+                    .request(MediaType.APPLICATION_XML);
             response = builder.post(Entity.entity(newUser, MediaType.APPLICATION_XML));
             switch (response.getStatus()) {
                 case 201:   //CREATED
@@ -124,8 +123,7 @@ public class DefaultService implements ConcertService {
         Response response = null;
         try {
             Builder builder = client.target(WEB_SERVICE_URI + "/user/login")
-                    .request(MediaType.APPLICATION_XML)
-                    .accept(MediaType.APPLICATION_XML);
+                    .request(MediaType.APPLICATION_XML);
             response = builder.post(Entity.entity(user, MediaType.APPLICATION_XML));
             switch (response.getStatus()) {
                 case 202:   //ACCEPTED
@@ -166,8 +164,7 @@ public class DefaultService implements ConcertService {
         Response response = null;
         try {
             Builder builder = client.target(WEB_SERVICE_URI + "/user/reserve")
-                    .request(MediaType.APPLICATION_XML)
-                    .accept(MediaType.APPLICATION_XML);
+                    .request(MediaType.APPLICATION_XML);
             if (token != null){
                 builder.cookie(token);
             }
@@ -206,17 +203,118 @@ public class DefaultService implements ConcertService {
 
     @Override
     public void confirmReservation(ReservationDTO reservation) throws ServiceException {
-
+        Client client = ClientBuilder.newClient();
+        Response response = null;
+        try {
+            Builder builder = client.target(WEB_SERVICE_URI + "/user/confirm")
+                    .request(MediaType.APPLICATION_XML);
+            if (token != null){
+                builder.cookie(token);
+            }
+            response = builder.post(Entity.entity(reservation, MediaType.APPLICATION_XML));
+            switch (response.getStatus()) {
+                case 401:   //UNAUTHORIZED
+                    throw new ServiceException(Messages.UNAUTHENTICATED_REQUEST);
+                case 403:   //FORBIDDEN
+                    throw new ServiceException(Messages.BAD_AUTHENTICATON_TOKEN);
+                case 408:   //REQUEST_TIMEOUT
+                    throw new ServiceException(Messages.EXPIRED_RESERVATION);
+                case 404:   //NOT_FOUND
+                    throw new ServiceException(Messages.CREDIT_CARD_NOT_REGISTERED);
+                case 200:   //OK
+                    return;
+                default:
+                    throw new ServiceException(Messages.SERVICE_COMMUNICATION_ERROR);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            if (e instanceof ServiceException) {
+                throw e;
+            }
+            throw new ServiceException(Messages.SERVICE_COMMUNICATION_ERROR);
+        } finally {
+            if (response != null) {
+                response.close();
+            }
+            if (client != null) {
+                client.close();
+            }
+        }
     }
 
     @Override
     public void registerCreditCard(CreditCardDTO creditCard) throws ServiceException {
-
+        Client client = ClientBuilder.newClient();
+        Response response = null;
+        try {
+            Builder builder = client.target(WEB_SERVICE_URI + "/user/creditcard")
+                    .request(MediaType.APPLICATION_XML);
+            if (token != null){
+                builder.cookie(token);
+            }
+            response = builder.post(Entity.entity(creditCard, MediaType.APPLICATION_XML));
+            switch (response.getStatus()) {
+                case 401:   //UNAUTHORIZED
+                    throw new ServiceException(Messages.UNAUTHENTICATED_REQUEST);
+                case 403:   //FORBIDDEN
+                    throw new ServiceException(Messages.BAD_AUTHENTICATON_TOKEN);
+                case 202:   //ACCEPTED
+                    return;
+                default:
+                    throw new ServiceException(Messages.SERVICE_COMMUNICATION_ERROR);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            if (e instanceof ServiceException) {
+                throw e;
+            }
+            throw new ServiceException(Messages.SERVICE_COMMUNICATION_ERROR);
+        } finally {
+            if (response != null) {
+                response.close();
+            }
+            if (client != null) {
+                client.close();
+            }
+        }
     }
 
     @Override
     public Set<BookingDTO> getBookings() throws ServiceException {
-        return null;
+        Client client = ClientBuilder.newClient();
+        Response response = null;
+        try {
+            Builder builder = client.target(WEB_SERVICE_URI + "/user/bookings")
+                    .request(MediaType.APPLICATION_XML);
+            if (token != null){
+                builder.cookie(token);
+            }
+            response = builder.get();
+            switch (response.getStatus()) {
+                case 401:   //UNAUTHORIZED
+                    throw new ServiceException(Messages.UNAUTHENTICATED_REQUEST);
+                case 403:   //FORBIDDEN
+                    throw new ServiceException(Messages.BAD_AUTHENTICATON_TOKEN);
+                case 200:   //OK
+                    return response.readEntity(new GenericType<Set<BookingDTO>>() {
+                    });
+                default:
+                    throw new ServiceException(Messages.SERVICE_COMMUNICATION_ERROR);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            if (e instanceof ServiceException) {
+                throw e;
+            }
+            throw new ServiceException(Messages.SERVICE_COMMUNICATION_ERROR);
+        } finally {
+            if (response != null) {
+                response.close();
+            }
+            if (client != null) {
+                client.close();
+            }
+        }
     }
 
     private void processCookieFromResponse(Response response) {

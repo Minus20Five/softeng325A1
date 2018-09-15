@@ -1,20 +1,15 @@
 package nz.ac.auckland.concert.service.domain;
 
 
+import nz.ac.auckland.concert.common.types.PriceBand;
 import nz.ac.auckland.concert.common.types.SeatNumber;
 import nz.ac.auckland.concert.common.types.SeatRow;
+import nz.ac.auckland.concert.service.domain.jpa.SeatNumberConverter;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Id;
-import javax.persistence.IdClass;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Version;
+import javax.persistence.*;
+import java.awt.print.PrinterException;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -27,6 +22,7 @@ public class Seat {
     private int version;
 
     @Id
+    @Convert(converter = SeatNumberConverter.class)
     private SeatNumber seatNumber;
 
     @Id
@@ -40,10 +36,20 @@ public class Seat {
     @Id
     private LocalDateTime dateTime;
 
+    @Enumerated(EnumType.STRING)
+    private PriceBand priceBand;
+
     @ManyToOne
     @JoinColumn
     private Reservation reservation;
 
+    public PriceBand getPriceBand() {
+        return priceBand;
+    }
+
+    public void setPriceBand(PriceBand priceBand) {
+        this.priceBand = priceBand;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -75,12 +81,13 @@ public class Seat {
 
     }
 
-    public Seat(SeatNumber seatNumber, SeatRow seatRow, Concert concert, LocalDateTime dateTime, Reservation reservation) {
+    public Seat(SeatNumber seatNumber, SeatRow seatRow, Concert concert, LocalDateTime dateTime, Reservation reservation, PriceBand priceBand) {
         this.seatNumber = seatNumber;
         this.seatRow = seatRow;
         this.concert = concert;
         this.dateTime = dateTime;
         this.reservation = reservation;
+        this.priceBand = priceBand;
     }
 
     public Concert getConcert() {

@@ -1,5 +1,6 @@
 package nz.ac.auckland.concert.service.domain;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.OneToOne;
@@ -16,7 +17,10 @@ public class User {
 
     private String token;
 
-    @OneToOne
+    @OneToOne(
+            cascade = CascadeType.PERSIST,
+            orphanRemoval = true
+    )
     private CreditCard creditCard;
 
 

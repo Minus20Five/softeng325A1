@@ -177,14 +177,14 @@ public interface ConcertService {
 	 * class nz.ac.auckland.concert.common.Messages.
 	 *
 	 * Condition: the request is made by an unauthenticated user.
-	 * Messages.UNAUTHENTICATED_REQUEST
+	 * Messages.UNAUTHENTICATED_REQUEST	//unauthorized
 	 *
 	 * Condition: the request includes an authentication token but it's not
 	 * recognised by the remote service.
-	 * Messages.BAD_AUTHENTICATON_TOKEN
+	 * Messages.BAD_AUTHENTICATON_TOKEN  //forbidden
 	 *
 	 * Condition: the reservation has expired.
-	 * Messages.EXPIRED_RESERVATION
+	 * Messages.EXPIRED_RESERVATION		//not found
 	 *
 	 * Condition: the user associated with the request doesn't have a credit
 	 * card registered with the remote service.
@@ -205,12 +205,12 @@ public interface ConcertService {
 	 * The exception's message is defined in
 	 * class nz.ac.auckland.concert.common.Messages.
 	 *
-	 * Condition: the request is made by an unauthenticated user.
+	 * Condition: the request is made by an unauthenticated user.  //unauthorized
 	 * Messages.UNAUTHENTICATED_REQUEST
 	 *
 	 * Condition: the request includes an authentication token but it's not
 	 * recognised by the remote service.
-	 * Messages.BAD_AUTHENTICATON_TOKEN
+	 * Messages.BAD_AUTHENTICATON_TOKEN			//forbidden
 	 *
 	 * Condition: there is a communication error.
 	 * Messages.SERVICE_COMMUNICATION_ERROR

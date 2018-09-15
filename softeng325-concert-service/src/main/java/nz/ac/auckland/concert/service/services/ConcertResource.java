@@ -1,21 +1,9 @@
 package nz.ac.auckland.concert.service.services;
 
-import nz.ac.auckland.concert.common.dto.ConcertDTO;
-import nz.ac.auckland.concert.common.dto.PerformerDTO;
-import nz.ac.auckland.concert.common.dto.ReservationDTO;
-import nz.ac.auckland.concert.common.dto.ReservationRequestDTO;
-import nz.ac.auckland.concert.common.dto.SeatDTO;
-import nz.ac.auckland.concert.common.dto.UserDTO;
+import nz.ac.auckland.concert.common.dto.*;
 import nz.ac.auckland.concert.common.types.Config;
-import nz.ac.auckland.concert.service.domain.Concert;
-import nz.ac.auckland.concert.service.domain.Performer;
-import nz.ac.auckland.concert.service.domain.Reservation;
-import nz.ac.auckland.concert.service.domain.Seat;
-import nz.ac.auckland.concert.service.domain.User;
-import nz.ac.auckland.concert.service.domain.mapper.ConcertMapper;
-import nz.ac.auckland.concert.service.domain.mapper.PerformerMapper;
-import nz.ac.auckland.concert.service.domain.mapper.SeatMapper;
-import nz.ac.auckland.concert.service.domain.mapper.UserMapper;
+import nz.ac.auckland.concert.service.domain.*;
+import nz.ac.auckland.concert.service.domain.mapper.*;
 import nz.ac.auckland.concert.service.util.TheatreUtility;
 
 import javax.persistence.EntityManager;
@@ -46,6 +34,11 @@ import java.util.UUID;
 @Consumes(MediaType.APPLICATION_XML)
 @Path("/res")
 public class ConcertResource {
+
+    //TODO instead of posting to generic user/stuff, make it user/id/stuff
+    //TODO refactor out common Response checks by using exceptions
+    //TODO add version to USER
+    //TODO in finally block, might need to commit the transaction
 
 //    public ConcertResource() {
 //        EntityManager em = PersistenceManager.instance().createEntityManager();
@@ -205,7 +198,7 @@ public class ConcertResource {
             }
 
             //Check concert exists on requested date and time
-            TypedQuery<Concert> concertQuery = em.createQuery("SELECT C FROM CONCERTS C JOIN FETCH C.dateTimes" +
+            TypedQuery<Concert> concertQuery = em.createQuery("SELECT C FROM CONCERTS C JOIN FETCH C.dateTimes D" +
                     " WHERE C.id = :id", Concert.class)
                     .setParameter("id", requestDTO.getConcertId());
             Concert concert = concertQuery.getSingleResult();
@@ -214,7 +207,7 @@ public class ConcertResource {
             }
 
             //Get all reserved seats for concert at the specified time
-            TypedQuery<Seat> reservedSeatsForConcert = em.createQuery("SELECT S FROM SEATS S JOIN FETCH S.reservation " +
+            TypedQuery<Seat> reservedSeatsForConcert = em.createQuery("SELECT S FROM SEATS S JOIN FETCH S.reservation R " +
                     "WHERE S.concert.id = :concertID " +
                     "AND S.dateTime = :dateTime", Seat.class)
                     .setParameter("concertID", requestDTO.getConcertId())
@@ -222,7 +215,7 @@ public class ConcertResource {
                     .setLockMode(LockModeType.OPTIMISTIC);
             List<Seat> reservedSeats = reservedSeatsForConcert.getResultList();
 
-            //Remove seats from timed-out reservations and cache them
+            //Remove seats from timed-out reservations and cache them (in case they are re-booked)
             HashMap<Seat, Seat> seatsToBeRemoved = new HashMap<>();
             for (Iterator<Seat> iterator = reservedSeats.iterator(); iterator.hasNext(); ) {
                 Seat seat = iterator.next();
@@ -236,7 +229,6 @@ public class ConcertResource {
                     seatsToBeRemoved.put(seat, seat);
                 }
             }
-
 
             //Convert to DTO
             Set<SeatDTO> reservedSeatsDTO = new HashSet<>();
@@ -271,10 +263,10 @@ public class ConcertResource {
                         concert,
                         requestDTO.getDate(),
                         newReservation);
-                if (seatsToBeRemoved.keySet().contains(seatForReservation)) {
-                    Seat oldSeat = seatsToBeRemoved.get(seatForReservation);
-                    oldSeat.setReservation(newReservation);
-                    newReservation.getSeats().add(oldSeat);
+                if (seatsToBeRemoved.containsKey(seatForReservation)) {
+                    Seat canonicalSeat = seatsToBeRemoved.get(seatForReservation);
+                    canonicalSeat.setReservation(newReservation);
+                    newReservation.getSeats().add(canonicalSeat);
                 } else {
                     em.persist(seatForReservation);
                     newReservation.getSeats().add(seatForReservation);
@@ -292,8 +284,134 @@ public class ConcertResource {
         } finally {
             em.close();
         }
-
     }
+
+    @POST
+    @Path("/user/confirm")
+    public Response confirmReservation(ReservationDTO reservationDTO, @CookieParam(Config.CLIENT_COOKIE) Cookie token){
+        EntityManager em = PersistenceManager.instance().createEntityManager();
+        em.getTransaction().begin();
+        try {
+            //Check authorization token is passed in
+            if (token == null) {
+                return Response.status(Response.Status.UNAUTHORIZED).build();
+            }
+
+            //Check token associated with User
+            TypedQuery<User> userQuery = em.createQuery("SELECT U FROM USERS U " +
+                    " WHERE U.token = :token", User.class)
+                    .setParameter("token", token.getValue());
+            User user = userQuery.getSingleResult();
+
+            Reservation reservation = em.find(
+                    Reservation.class,
+                    reservationDTO.getId(),
+                    LockModeType.OPTIMISTIC);
+
+            if (!reservation.getUser().equals(user)) {
+                return Response.status(Response.Status.FORBIDDEN).build();
+            }
+
+            if (!reservation.getConfirmed()
+                    && reservation.getTimeStamp().isBefore(LocalTime.now()
+                    .minusSeconds(Config.SECONDS_TO_EXPIRE))){
+                em.remove(reservation);
+                em.getTransaction().commit();
+                return Response.status(Response.Status.REQUEST_TIMEOUT).build();
+            }
+
+            if (user.getCreditCard() ==  null){
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+
+            reservation.setConfirmed(true);
+            em.getTransaction().commit();
+            return Response.ok().build();
+        } catch (Exception e) {
+            return Response.serverError().build();
+        } finally {
+            em.close();
+        }
+    }
+
+
+    @POST
+    @Path("/user/creditcard")
+    public Response registerCreditCard(CreditCardDTO creditCardDTO, @CookieParam(Config.CLIENT_COOKIE) Cookie token){
+        EntityManager em = PersistenceManager.instance().createEntityManager();
+        em.getTransaction().begin();
+        try {
+            //Check authorization token is passed in
+            if (token == null) {
+                return Response.status(Response.Status.UNAUTHORIZED).build();
+            }
+
+            //Check token associated with User
+            TypedQuery<User> userQuery = em.createQuery("SELECT U FROM USERS U WHERE U.token = :token", User.class)
+                    .setParameter("token", token.getValue());
+            User user = userQuery.getSingleResult();
+            if (user == null) {
+                return Response.status(Response.Status.FORBIDDEN).build();
+            }
+
+            CreditCard creditCard = CreditCardMapper.toDomainModel(creditCardDTO);
+            user.setCreditCard(creditCard);
+            em.getTransaction().commit();
+
+            return Response.accepted().build();
+
+        } catch (Exception e) {
+            return Response.serverError().build();
+        } finally {
+            em.close();
+        }
+    }
+
+    @GET
+    @Path("/user/bookings")
+    public Response getBookings(@CookieParam(Config.CLIENT_COOKIE) Cookie token){
+        EntityManager em = PersistenceManager.instance().createEntityManager();
+        em.getTransaction().begin();
+        try {
+            //Check authorization token is passed in
+            if (token == null) {
+                return Response.status(Response.Status.UNAUTHORIZED).build();
+            }
+
+            //Check token associated with User
+            TypedQuery<User> userQuery = em.createQuery("SELECT U FROM USERS U WHERE U.token = :token", User.class)
+                    .setParameter("token", token.getValue());
+            User user = userQuery.getSingleResult();
+            if (user == null) {
+                return Response.status(Response.Status.FORBIDDEN).build();
+            }
+
+            TypedQuery<Reservation> bookingQuery = em.createQuery("SELECT DISTINCT R FROM RESERVATIONS R " +
+                    "JOIN FETCH R.concert C " +
+                    "JOIN FETCH R.seats S " +
+                    "WHERE R.confirmed = true " +
+                    "AND R.user = :user", Reservation.class)
+                    .setParameter("user", user)
+                    .setLockMode(LockModeType.OPTIMISTIC);
+            List<Reservation> confirmedReservations = bookingQuery.getResultList();
+            Set<BookingDTO> bookingDTOs = new HashSet<>();
+            for (Reservation reservation : confirmedReservations) {
+                bookingDTOs.add(BookingMapper.toDTO(reservation));
+            }
+
+            GenericEntity<Set<BookingDTO>> ge = new GenericEntity<Set<BookingDTO>>(bookingDTOs) {};
+
+            return Response.ok(ge).build();
+
+        } catch (Exception e) {
+            return Response.serverError().build();
+        } finally {
+            em.close();
+        }
+    }
+
+
+
 
 
 }
